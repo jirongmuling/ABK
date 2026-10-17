@@ -357,7 +357,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          repo="xingguangcuican6666/ABK_control_module"
+          repo="jirongmuling/ABK"
           workflow="lkm.yml"
           target_dir="app/src/main/assets/abk_lkm"
           mkdir -p "$target_dir"
