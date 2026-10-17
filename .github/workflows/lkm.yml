@@ -1,0 +1,52 @@
+name: LKM Build
+
+# Lightweight ABK LKM builder: builds the .ko assets the ABK app bundles.
+# Artifacts follow the upstream convention <variant>-<track>-<kmi>-lkm.
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - kernelsu
+          - sukisu
+        track:
+          - stable
+        kmi:
+          - android12-5.10
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/ylarod/ddk-min:${{ matrix.kmi }}-20260313
+      credentials:
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+      options: --privileged
+    steps:
+      - name: Checkout control module
+        uses: actions/checkout@v6
+        with:
+          repository: xingguangcuican6666/ABK_control_module
+          path: control-module
+
+      - name: Build module
+        env:
+          LKM_VARIANT: ${{ matrix.variant }}
+          LKM_TRACK: ${{ matrix.track }}
+          LKM_KMI: ${{ matrix.kmi }}
+          LKM_OUT_DIR: ${{ github.workspace }}/lkm/out
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/control-module"
+          bash "$GITHUB_WORKSPACE/control-module/lkm/build.sh"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.variant }}-${{ matrix.track }}-${{ matrix.kmi }}-lkm
+          path: ${{ github.workspace }}/lkm/out/${{ matrix.variant }}/${{ matrix.kmi }}_kernelsu.ko
+          if-no-files-found: error
